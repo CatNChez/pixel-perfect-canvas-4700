@@ -45,7 +45,7 @@ function RobotsPage() {
           </div>
           {tab === "Overview" && (
             <div className="grid gap-4 md:grid-cols-2">
-              <F k="name" label="Robot Name" /><F k="team" label="Team" /><F k="competition" label="Competition" />
+              {F({ k: "name", label: "Robot Name" })}{F({ k: "team", label: "Team" })}{F({ k: "competition", label: "Competition" })}
               <label className="block"><span className="hud-label">Programming Language</span>
                 <select className="field mt-1 w-full" value={r.lang} onChange={(e) => upd({ lang: e.target.value as Robot["lang"] })}><option value="python">Python</option><option value="cpp">C++</option></select></label>
               <div className="md:col-span-2">
@@ -60,7 +60,7 @@ function RobotsPage() {
               </div>
             </div>
           )}
-          {tab === "Build" && <div className="grid gap-4 md:grid-cols-2"><F k="drivetrain" label="Drivetrain" /><F k="motors" label="Motors" /><F k="sensors" label="Sensors" /><F k="mechanisms" label="Main Mechanisms" /></div>}
+          {tab === "Build" && <div className="grid gap-4 md:grid-cols-2">{F({ k: "drivetrain", label: "Drivetrain" })}{F({ k: "motors", label: "Motors" })}{F({ k: "sensors", label: "Sensors" })}{F({ k: "mechanisms", label: "Main Mechanisms" })}</div>}
           {tab === "CAD" && <div className="rounded-md border border-dashed p-10 text-center text-muted-foreground">Link or upload your CAD files here (coming with accounts).</div>}
           {tab === "Code" && <div className="space-y-2">{s.projects.filter((p) => p.lang === r.lang).map((p) => <div key={p.id} className="rounded-md bg-muted px-3 py-2 font-mono text-sm">{p.name}{p.lang === "python" ? ".py" : ".cpp"}</div>)}</div>}
           {tab === "Notes" && <textarea className="field min-h-60 w-full font-mono" value={r.notes} onChange={(e) => upd({ notes: e.target.value })} placeholder="Build notes..." />}

@@ -45,7 +45,7 @@ function CalendarPage() {
     setForm(null);
   };
 
-  const title = view === "month" ? cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" }) : view === "week" ? `Week of ${days[0].toLocaleDateString()}` : cursor.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const title = view === "month" ? cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" }) : view === "week" ? `Week of ${days[0]?.toLocaleDateString()}` : cursor.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
   return (
     <div>

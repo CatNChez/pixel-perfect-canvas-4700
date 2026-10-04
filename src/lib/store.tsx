@@ -133,4 +133,4 @@ export function timeAgo(t: number) {
   return d === 1 ? "yesterday" : `${d} days ago`;
 }
 export const todayStr = () => new Date().toISOString().slice(0, 10);
-export const fmtTime = (t: string) => { const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
+export const fmtTime = (t: string) => { const [h = 0, m = 0] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };

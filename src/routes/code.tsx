@@ -4,6 +4,7 @@ import { Copy, CopyPlus, FolderOpen, Play, RotateCcw, Save, Send, Trash2, Plus, 
 import { Bar, PageHeader } from "@/components/Shell";
 import { CodeEditor, runPython } from "@/components/CodeEditor";
 import { starter, timeAgo, useStore, type Lang } from "@/lib/store";
+import { CHALLENGES } from "@/lib/challenges";
 
 export const Route = createFileRoute("/code")({
   head: () => ({
@@ -18,13 +19,6 @@ export const Route = createFileRoute("/code")({
 });
 
 const FOLDERS = ["All", "Competition", "Practice", "Autonomous", "Experiments", "School"];
-
-const CHALLENGES = [
-  { id: "b1", level: "BEGINNER", text: "Make the drivetrain move forward.", points: 50, check: /forward|speed|drive/i, best: 100 },
-  { id: "i1", level: "INTERMEDIATE", text: "Make the robot turn exactly 90 degrees.", points: 120, check: /90/, best: null },
-  { id: "a1", level: "ADVANCED", text: "Use a distance sensor to stop the robot at a specific distance.", points: 250, check: /distance/i, best: null },
-  { id: "e1", level: "EXPERT", text: "Create a fully autonomous scoring routine.", points: 500, check: /(auton|score)[\s\S]*(turn|drive)/i, best: null },
-];
 
 function CodePage() {
   const { s, set, uid } = useStore();

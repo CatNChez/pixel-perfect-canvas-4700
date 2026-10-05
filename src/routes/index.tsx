@@ -1,19 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bot, Calendar, CheckSquare, Code2, NotebookPen, PlayCircle, Users, Flame, Trophy, Gauge, Clock } from "lucide-react";
+import { useState } from "react";
+import { Bot, Calendar, CheckSquare, Code2, NotebookPen, PlayCircle, Users, Flame, Trophy, Gauge, Clock, Play, RotateCcw, Save, Send, Check } from "lucide-react";
 import { Bar, PageHeader } from "@/components/Shell";
-import { catColor, fmtTime, todayStr, useStore } from "@/lib/store";
+import { CodeEditor, runPython } from "@/components/CodeEditor";
+import { catColor, fmtTime, starter, todayStr, useStore, type Lang } from "@/lib/store";
+import { CHALLENGES } from "@/lib/challenges";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Command Center — CATty" },
-      { name: "description", content: "Your robotics level, streak, deadlines and today's schedule at a glance." },
+      { name: "description", content: "Your coding command center: write and run Python or C++ robot code, take challenges, and see today's schedule." },
       { property: "og:title", content: "Command Center — CATty" },
-      { property: "og:description", content: "Your robotics level, streak, deadlines and today's schedule at a glance." },
+      { property: "og:description", content: "Your coding command center: write and run Python or C++ robot code, take challenges, and see today's schedule." },
     ],
   }),
   component: Home,
 });
+
+const TABS = [
+  { id: "code", label: "Code" },
+  { id: "challenges", label: "Challenges" },
+  { id: "overview", label: "Overview" },
+] as const;
+type Tab = typeof TABS[number]["id"];
 
 const ACTIONS = [
   { to: "/code", label: "Write Code", icon: Code2 },
@@ -26,7 +36,47 @@ const ACTIONS = [
 ] as const;
 
 function Home() {
-  const { s } = useStore();
+  const { s, set, uid } = useStore();
+  const [tab, setTab] = useState<Tab>("code");
+  const lang: Lang = s.lang;
+  const [draft, setDraft] = useState(starter(lang));
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [output, setOutput] = useState("> Console ready.");
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    if (lang === "python") {
+      setOutput("> Running Python...\n(first run loads the runtime, a few seconds)");
+      const out = await runPython(draft);
+      setOutput("> python main.py\n" + out);
+    } else {
+      const prints = [...draft.matchAll(/(?:cout\s*<<\s*|printf\(\s*)"([^"]*)"/g)].map((m) => m[1]);
+      setOutput("> g++ main.cpp (simulated)\nCompiled OK. C++ runs on your robot brain.\n" + (prints.length ? prints.join("\n") : "Robot executed routine."));
+    }
+    setBusy(false);
+  };
+  const save = () => {
+    const name = prompt("Project name?"); if (!name) return;
+    set((st) => ({ ...st, projects: [{ id: uid(), name, lang, folder: "Practice", code: draft, progress: 0, updated: Date.now() }, ...st.projects] }));
+    setOutput((o) => o + `\n> Saved as "${name}".`);
+  };
+  const submit = () => {
+    const c = CHALLENGES.find((x) => x.id === challenge);
+    if (!c) { setOutput((o) => o + "\n> Submitted project for review."); return; }
+    if (c.check.test(draft)) {
+      set((st) => ({ ...st, completedChallenges: Array.from(new Set([...st.completedChallenges, c.id])) }));
+      setOutput(`> Challenge "${c.level}" PASSED ✔  +${c.points} pts`);
+    } else setOutput(`> Not quite. Hint: your code should address "${c.text}"`);
+  };
+  const startChallenge = (id: string) => {
+    const c = CHALLENGES.find((x) => x.id === id); if (!c) return;
+    setChallenge(id);
+    setDraft(lang === "python" ? `# ${c.text}\n` : `// ${c.text}\n`);
+    setOutput("> Challenge loaded. Write code, then SUBMIT.");
+    setTab("code");
+  };
+
   const today = todayStr();
   const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
   const todayEv = s.events.filter((e) => e.date === today).sort((a, b) => a.time.localeCompare(b.time));
@@ -43,65 +93,118 @@ function Home() {
 
   return (
     <div>
-      <PageHeader kicker="Your Robotics Command Center" title={`WELCOME BACK, ${s.username.toUpperCase()}`} />
+      <PageHeader kicker="Your Coding Command Center" title={`WELCOME BACK, ${s.username.toUpperCase()}`} />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        {stats.map((st) => (
-          <div key={st.label} className="panel p-4">
-            <div className="flex items-center justify-between"><span className="hud-label">{st.label}</span><st.icon className="h-4 w-4 text-primary" /></div>
-            <div className="my-2 font-display text-2xl font-bold">{st.value}</div>
-            <Bar value={st.bar} />
+      <div className="mb-6 flex justify-center">
+        <div className="flex gap-1 rounded-md border bg-card/60 p-1">
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`rounded px-4 py-1.5 font-mono text-xs uppercase tracking-widest transition ${tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab === "code" && (
+        <div className="panel flex flex-col gap-3 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-sm text-primary">{challenge ? `challenge_${challenge}` : "main"}{lang === "python" ? ".py" : ".cpp"}</span>
+            <div className="ml-auto flex flex-wrap gap-2">
+              {(["python", "cpp"] as Lang[]).map((l) => (
+                <button key={l} onClick={() => set((st) => ({ ...st, lang: l }))} className={`btn ${s.lang === l ? "btn-primary" : ""}`}>{l === "python" ? "Python" : "C++"}</button>
+              ))}
+              <button className="btn btn-primary" onClick={run} disabled={busy}><Play className="h-3.5 w-3.5" />{busy ? "Running" : "Run Code"}</button>
+              <button className="btn" onClick={save}><Save className="h-3.5 w-3.5" />Save</button>
+              <button className="btn" onClick={() => { setDraft(starter(lang)); setOutput("> Reset."); }}><RotateCcw className="h-3.5 w-3.5" />Reset</button>
+              {challenge && <button className="btn border-accent text-accent" onClick={submit}><Send className="h-3.5 w-3.5" />Submit</button>}
+            </div>
           </div>
-        ))}
-        <div className="panel border-accent/40 p-4">
-          <div className="flex items-center justify-between"><span className="hud-label">Next Deadline</span><Clock className="h-4 w-4 text-accent" /></div>
-          <div className="mt-2 font-display text-lg font-semibold leading-tight text-accent">{next ? next.title : "Nothing due"}</div>
-          {next && <div className="mt-1 font-mono text-xs text-muted-foreground">{new Date(next.date + "T00:00").toLocaleDateString(undefined, { weekday: "long" })}</div>}
+          <div className="h-[440px]"><CodeEditor value={draft} onChange={setDraft} lang={lang} /></div>
+          <pre className="max-h-48 min-h-28 overflow-auto rounded-md border bg-background p-3 font-mono text-xs text-success">{output}</pre>
         </div>
-      </div>
+      )}
 
-      <h2 className="hud-label mb-3 mt-8">Quick Actions</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        {ACTIONS.map((a) => (
-          <Link key={a.label} to={a.to} className="panel group flex flex-col items-center gap-3 p-5 text-center transition hover:-translate-y-1 hover:border-primary hover:glow">
-            <a.icon className="h-8 w-8 text-primary transition group-hover:scale-110" />
-            <span className="font-mono text-xs uppercase tracking-widest">{a.label}</span>
-          </Link>
-        ))}
-      </div>
-
-      <div className="mt-8 grid gap-4 lg:grid-cols-3">
-        <div className="panel p-5 lg:col-span-2">
-          <h2 className="hud-label mb-4 text-primary">Today</h2>
-          <ul className="space-y-2">
-            {todayEv.length === 0 && <li className="text-sm text-muted-foreground">Nothing scheduled.</li>}
-            {todayEv.map((e) => (
-              <li key={e.id} className="flex items-center gap-4 rounded-md bg-muted/60 px-3 py-2">
-                <span className="w-20 font-mono text-sm text-primary">{fmtTime(e.time)}</span>
-                <span className={`h-2 w-2 rounded-full ${catColor[e.category]}`} />
-                <span>{e.title}</span>
-              </li>
-            ))}
-          </ul>
-          {tomEv.length > 0 && (
-            <>
-              <h3 className="hud-label mb-2 mt-5">Tomorrow</h3>
-              {tomEv.map((e) => <div key={e.id} className="text-sm text-accent">{e.title}</div>)}
-            </>
-          )}
+      {tab === "challenges" && (
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          {CHALLENGES.map((c) => {
+            const done = s.completedChallenges.includes(c.id);
+            return (
+              <div key={c.id} className={`panel flex flex-col p-4 ${challenge === c.id ? "border-accent" : ""}`}>
+                <div className="flex items-center justify-between"><span className="hud-label text-accent">{c.level}</span>{done ? <Check className="h-4 w-4 text-success" /> : <Trophy className="h-4 w-4 text-muted-foreground" />}</div>
+                <p className="my-3 flex-1">{c.text}</p>
+                <div className="mb-3 grid grid-cols-2 gap-1 font-mono text-[11px] text-muted-foreground">
+                  <span>LANG: {lang === "python" ? "PY" : "C++"}</span><span>PTS: {c.points}</span>
+                  <span>BEST: {done ? c.best ?? 100 : "—"}</span><span className={done ? "text-success" : ""}>{done ? "COMPLETE" : "OPEN"}</span>
+                </div>
+                <button className="btn justify-center" onClick={() => startChallenge(c.id)}>Start</button>
+              </div>
+            );
+          })}
         </div>
-        <div className="panel p-5">
-          <h2 className="hud-label mb-4 text-primary">My Goals</h2>
-          <div className="space-y-4">
-            {s.goals.map((g) => (
-              <div key={g.id}>
-                <div className="mb-1 flex justify-between text-sm"><span>{g.title}</span><span className="font-mono text-xs text-muted-foreground">{g.target === 100 ? `${g.current}%` : `${g.current} / ${g.target}`}</span></div>
-                <Bar value={(g.current / g.target) * 100} className="bg-accent" />
+      )}
+
+      {tab === "overview" && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            {stats.map((st) => (
+              <div key={st.label} className="panel p-4">
+                <div className="flex items-center justify-between"><span className="hud-label">{st.label}</span><st.icon className="h-4 w-4 text-primary" /></div>
+                <div className="my-2 font-display text-2xl font-bold">{st.value}</div>
+                <Bar value={st.bar} />
               </div>
             ))}
+            <div className="panel border-accent/40 p-4">
+              <div className="flex items-center justify-between"><span className="hud-label">Next Deadline</span><Clock className="h-4 w-4 text-accent" /></div>
+              <div className="mt-2 font-display text-lg font-semibold leading-tight text-accent">{next ? next.title : "Nothing due"}</div>
+              {next && <div className="mt-1 font-mono text-xs text-muted-foreground">{new Date(next.date + "T00:00").toLocaleDateString(undefined, { weekday: "long" })}</div>}
+            </div>
           </div>
-        </div>
-      </div>
+
+          <h2 className="hud-label mb-3 mt-8">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+            {ACTIONS.map((a) => (
+              <Link key={a.label} to={a.to} className="panel group flex flex-col items-center gap-3 p-5 text-center transition hover:-translate-y-1 hover:border-primary hover:glow">
+                <a.icon className="h-8 w-8 text-primary transition group-hover:scale-110" />
+                <span className="font-mono text-xs uppercase tracking-widest">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            <div className="panel p-5 lg:col-span-2">
+              <h2 className="hud-label mb-4 text-primary">Today</h2>
+              <ul className="space-y-2">
+                {todayEv.length === 0 && <li className="text-sm text-muted-foreground">Nothing scheduled.</li>}
+                {todayEv.map((e) => (
+                  <li key={e.id} className="flex items-center gap-4 rounded-md bg-muted/60 px-3 py-2">
+                    <span className="w-20 font-mono text-sm text-primary">{fmtTime(e.time)}</span>
+                    <span className={`h-2 w-2 rounded-full ${catColor[e.category]}`} />
+                    <span>{e.title}</span>
+                  </li>
+                ))}
+              </ul>
+              {tomEv.length > 0 && (
+                <>
+                  <h3 className="hud-label mb-2 mt-5">Tomorrow</h3>
+                  {tomEv.map((e) => <div key={e.id} className="text-sm text-accent">{e.title}</div>)}
+                </>
+              )}
+            </div>
+            <div className="panel p-5">
+              <h2 className="hud-label mb-4 text-primary">My Goals</h2>
+              <div className="space-y-4">
+                {s.goals.map((g) => (
+                  <div key={g.id}>
+                    <div className="mb-1 flex justify-between text-sm"><span>{g.title}</span><span className="font-mono text-xs text-muted-foreground">{g.target === 100 ? `${g.current}%` : `${g.current} / ${g.target}`}</span></div>
+                    <Bar value={(g.current / g.target) * 100} className="bg-accent" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

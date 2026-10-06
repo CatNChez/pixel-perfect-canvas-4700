@@ -1,16 +1,17 @@
 import { useRef, type KeyboardEvent } from "react";
-import type { Lang } from "@/lib/store";
+import { LANGS, type Lang } from "@/lib/langs";
 
-const KW: Record<Lang, string[]> = {
-  python: ["def", "return", "if", "elif", "else", "for", "while", "in", "import", "from", "as", "class", "True", "False", "None", "and", "or", "not", "print", "range", "break", "continue", "pass"],
-  cpp: ["int", "float", "double", "void", "return", "if", "else", "for", "while", "include", "using", "namespace", "class", "struct", "true", "false", "const", "bool", "auto"],
+const KW: Record<"py" | "cpp", string[]> = {
+  py: ["def", "return", "if", "elif", "else", "for", "while", "in", "import", "from", "as", "class", "True", "False", "None", "and", "or", "not", "print", "range", "break", "continue", "pass", "try", "except", "with", "lambda"],
+  cpp: ["int", "float", "double", "void", "return", "if", "else", "for", "while", "include", "using", "namespace", "class", "struct", "true", "false", "const", "bool", "auto", "std", "pros", "lemlib", "vex", "nullptr", "static", "char"],
 };
 
 function esc(s: string) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
 function highlight(code: string, lang: Lang) {
-  const com = lang === "python" ? "#[^\\n]*" : "\\/\\/[^\\n]*";
-  const re = new RegExp(`(${com})|("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')|(\\b\\d+(?:\\.\\d+)?\\b)|(\\b(?:${KW[lang].join("|")})\\b)`, "g");
+  const fam = LANGS[lang]?.family ?? "py";
+  const com = fam === "py" ? "#[^\\n]*" : "\\/\\/[^\\n]*";
+  const re = new RegExp(`(${com})|("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')|(\\b\\d+(?:\\.\\d+)?\\b)|(\\b(?:${KW[fam].join("|")})\\b)`, "g");
   let out = ""; let last = 0; let m: RegExpExecArray | null;
   while ((m = re.exec(code))) {
     out += esc(code.slice(last, m.index));
@@ -33,13 +34,13 @@ export function CodeEditor({ value, onChange, lang }: { value: string; onChange:
       onChange(v);
       requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = a + txt.length; });
     };
-    if (e.key === "Tab") { e.preventDefault(); insert(lang === "python" ? "    " : "  "); }
+    if (e.key === "Tab") { e.preventDefault(); insert(LANGS[lang]?.family === "py" ? "    " : "  "); }
     if (e.key === "Enter") {
       e.preventDefault();
       const lineStart = value.lastIndexOf("\n", a - 1) + 1;
       const line = value.slice(lineStart, a);
       let indent = line.match(/^\s*/)?.[0] ?? "";
-      if (/[:{]\s*$/.test(line)) indent += lang === "python" ? "    " : "  ";
+      if (/[:{]\s*$/.test(line)) indent += LANGS[lang]?.family === "py" ? "    " : "  ";
       insert("\n" + indent);
     }
   };
@@ -62,28 +63,3 @@ export function CodeEditor({ value, onChange, lang }: { value: string; onChange:
   );
 }
 
-// Pyodide loader (browser Python)
-type Py = { runPythonAsync: (c: string) => Promise<unknown>; setStdout: (o: { batched: (s: string) => void }) => void; setStderr: (o: { batched: (s: string) => void }) => void };
-let pyPromise: Promise<Py> | null = null;
-export function loadPython(): Promise<Py> {
-  if (pyPromise) return pyPromise;
-  pyPromise = new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
-    s.onload = async () => {
-      try { resolve(await (window as unknown as { loadPyodide: () => Promise<Py> }).loadPyodide()); } catch (e) { reject(e); }
-    };
-    s.onerror = () => { pyPromise = null; reject(new Error("Could not load Python runtime")); };
-    document.head.appendChild(s);
-  });
-  return pyPromise;
-}
-
-export async function runPython(code: string): Promise<string> {
-  const py = await loadPython();
-  let out = "";
-  py.setStdout({ batched: (s) => { out += s + "\n"; } });
-  py.setStderr({ batched: (s) => { out += s + "\n"; } });
-  try { await py.runPythonAsync(code); } catch (e) { out += String((e as Error).message).split("\n").slice(-3).join("\n"); }
-  return out || "(no output)";
-}

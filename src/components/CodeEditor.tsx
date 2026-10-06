@@ -5,10 +5,6 @@ const KW: Record<"py" | "cpp", string[]> = {
   py: ["def", "return", "if", "elif", "else", "for", "while", "in", "import", "from", "as", "class", "True", "False", "None", "and", "or", "not", "print", "range", "break", "continue", "pass", "try", "except", "with", "lambda"],
   cpp: ["int", "float", "double", "void", "return", "if", "else", "for", "while", "include", "using", "namespace", "class", "struct", "true", "false", "const", "bool", "auto", "std", "pros", "lemlib", "vex", "nullptr", "static", "char"],
 };
-const _OLD: Record<string, string[]> = {
-  python: ["def", "return", "if", "elif", "else", "for", "while", "in", "import", "from", "as", "class", "True", "False", "None", "and", "or", "not", "print", "range", "break", "continue", "pass"],
-  cpp: ["int", "float", "double", "void", "return", "if", "else", "for", "while", "include", "using", "namespace", "class", "struct", "true", "false", "const", "bool", "auto"],
-};
 
 function esc(s: string) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 

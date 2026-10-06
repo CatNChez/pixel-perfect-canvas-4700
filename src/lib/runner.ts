@@ -50,7 +50,7 @@ async function runCpp(code: string, lang: Lang): Promise<string> {
   const res = await fetch("https://wandbox.org/api/compile.json", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ compiler: "gcc-13.2.0", code: buildCpp(code, lang), options: "warning", "compiler-option-raw": "-std=c++17" }),
+    body: JSON.stringify({ compiler: "gcc-13.2.0", code: buildCpp(code, lang), options: lang === "cpp" ? "warning" : "", "compiler-option-raw": "-std=c++17" }),
   });
   if (!res.ok) throw new Error("Compiler service unavailable (" + res.status + ")");
   const j = (await res.json()) as { status?: string; compiler_error?: string; program_output?: string; program_error?: string; signal?: string };

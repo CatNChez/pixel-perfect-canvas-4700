@@ -1,13 +1,17 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type Lang = "python" | "cpp";
+import { starter, type Lang } from "./langs";
+export type { Lang } from "./langs";
+export { starter } from "./langs";
 export type Category = "learning" | "coding" | "robotics" | "competition" | "homework" | "team" | "build";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 export interface Task { id: string; title: string; due: string; priority: Priority; category: Category; done: boolean }
 export interface Note { id: string; title: string; body: string; tags: string[]; folder: string; pinned: boolean; updated: number }
 export interface Event { id: string; title: string; date: string; time: string; description: string; category: Category; reminder: string }
-export interface Project { id: string; name: string; lang: Lang; folder: string; code: string; progress: number; updated: number }
+export interface Version { code: string; at: number }
+export interface Project { id: string; name: string; lang: Lang; folder: string; code: string; progress: number; updated: number; history?: Version[] }
+export interface Challenge { id: string; level: string; text: string; points: number; keyword: string }
 export interface Goal { id: string; title: string; current: number; target: number }
 export interface Robot { id: string; name: string; team: string; competition: string; drivetrain: string; motors: string; sensors: string; mechanisms: string; lang: Lang; notes: string }
 
@@ -29,39 +33,23 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const day = (offset: number) => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toISOString().slice(0, 10); };
 const ago = (h: number) => Date.now() - h * 3600_000;
 
-const PY_STARTER = `# Drivetrain test
-motor_speed = 75
-
-def drive(speed, seconds):
-    for t in range(seconds):
-        print(f"t={t}s  left={speed}%  right={speed}%")
-
-print("Robot ready!")
-drive(motor_speed, 3)
-`;
-const CPP_STARTER = `// Autonomous routine
-#include "vex.h"
-using namespace vex;
-
-int main() {
-  int motorSpeed = 75;
-  LeftDrive.spin(forward, motorSpeed, percent);
-  RightDrive.spin(forward, motorSpeed, percent);
-  wait(2, seconds);
-  Drivetrain.turnFor(right, 90, degrees);
-  return 0;
-}
-`;
-export const starter = (l: Lang) => (l === "python" ? PY_STARTER : CPP_STARTER);
+const PY_STARTER = starter("python");
+const CPP_STARTER = starter("vexcpp");
 
 interface State {
-  username: string; lang: Lang;
+  username: string; lang: Lang; user: string | null; challenges: Challenge[];
   tasks: Task[]; notes: Note[]; events: Event[]; projects: Project[]; goals: Goal[]; robots: Robot[];
   completedChallenges: string[];
 }
 
 const initial: State = {
-  username: "Alan", lang: "python",
+  username: "Alan", lang: "python", user: null,
+  challenges: [
+    { id: "b1", level: "BEGINNER", text: "Make the drivetrain move forward.", points: 50, keyword: "forward|speed|drive" },
+    { id: "i1", level: "INTERMEDIATE", text: "Make the robot turn exactly 90 degrees.", points: 120, keyword: "90" },
+    { id: "a1", level: "ADVANCED", text: "Use a distance sensor to stop the robot at a specific distance.", points: 250, keyword: "distance" },
+    { id: "e1", level: "EXPERT", text: "Create a fully autonomous scoring routine.", points: 500, keyword: "(auton|score)[\\s\\S]*(turn|drive)" },
+  ],
   tasks: [
     { id: uid(), title: "Finish drivetrain lesson", due: day(0), priority: "HIGH", category: "learning", done: false },
     { id: uid(), title: "Complete Python challenge", due: day(1), priority: "MEDIUM", category: "coding", done: false },
@@ -90,7 +78,7 @@ const initial: State = {
   ],
   projects: [
     { id: uid(), name: "Drivetrain Test", lang: "python", folder: "Practice", code: PY_STARTER, progress: 80, updated: ago(2) },
-    { id: uid(), name: "Autonomous Routine", lang: "cpp", folder: "Autonomous", code: CPP_STARTER, progress: 55, updated: ago(26) },
+    { id: uid(), name: "Autonomous Routine", lang: "vexcpp", folder: "Autonomous", code: CPP_STARTER, progress: 55, updated: ago(26) },
     { id: uid(), name: "Distance Sensor Challenge", lang: "python", folder: "Experiments", code: "distance = 300\nwhile distance > 100:\n    distance -= 50\n    print('Distance:', distance, 'mm')\nprint('STOP')\n", progress: 30, updated: ago(96) },
   ],
   goals: [
@@ -105,7 +93,7 @@ const initial: State = {
   completedChallenges: ["b1"],
 };
 
-const Ctx = createContext<{ s: State; set: (fn: (s: State) => State) => void; uid: () => string } | null>(null);
+const Ctx = createContext<{ s: State; set: (fn: (s: State) => State) => void; uid: () => string; loaded: boolean } | null>(null);
 const KEY = "catty-dashboard-v1";
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -116,7 +104,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setLoaded(true);
   }, []);
   useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify(s)); }, [s, loaded]);
-  return <Ctx.Provider value={{ s, set: setS, uid }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ s, set: setS, uid, loaded }}>{children}</Ctx.Provider>;
+}
+
+/** Save code into a project, keeping the previous version in its history (max 25). */
+export function withSaved(p: Project, code: string): Project {
+  if (p.code === code) return p;
+  return { ...p, code, updated: Date.now(), history: [{ code: p.code, at: p.updated }, ...(p.history ?? [])].slice(0, 25) };
 }
 
 export function useStore() {

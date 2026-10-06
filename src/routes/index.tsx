@@ -2,9 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Bot, Calendar, CheckSquare, Code2, NotebookPen, PlayCircle, Users, Flame, Trophy, Gauge, Clock, Play, RotateCcw, Save, Send, Check } from "lucide-react";
 import { Bar, PageHeader } from "@/components/Shell";
-import { CodeEditor, runPython } from "@/components/CodeEditor";
-import { catColor, fmtTime, starter, todayStr, useStore, type Lang } from "@/lib/store";
-import { CHALLENGES } from "@/lib/challenges";
+import { CodeWorkspace } from "@/components/CodeWorkspace";
+import { ChallengesPanel } from "@/components/ChallengesPanel";
+import { catColor, fmtTime, todayStr, useStore, type Challenge } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,46 +36,9 @@ const ACTIONS = [
 ] as const;
 
 function Home() {
-  const { s, set, uid } = useStore();
+  const { s } = useStore();
   const [tab, setTab] = useState<Tab>("code");
-  const lang: Lang = s.lang;
-  const [draft, setDraft] = useState(starter(lang));
-  const [challenge, setChallenge] = useState<string | null>(null);
-  const [output, setOutput] = useState("> Console ready.");
-  const [busy, setBusy] = useState(false);
-
-  const run = async () => {
-    setBusy(true);
-    if (lang === "python") {
-      setOutput("> Running Python...\n(first run loads the runtime, a few seconds)");
-      const out = await runPython(draft);
-      setOutput("> python main.py\n" + out);
-    } else {
-      const prints = [...draft.matchAll(/(?:cout\s*<<\s*|printf\(\s*)"([^"]*)"/g)].map((m) => m[1]);
-      setOutput("> g++ main.cpp (simulated)\nCompiled OK. C++ runs on your robot brain.\n" + (prints.length ? prints.join("\n") : "Robot executed routine."));
-    }
-    setBusy(false);
-  };
-  const save = () => {
-    const name = prompt("Project name?"); if (!name) return;
-    set((st) => ({ ...st, projects: [{ id: uid(), name, lang, folder: "Practice", code: draft, progress: 0, updated: Date.now() }, ...st.projects] }));
-    setOutput((o) => o + `\n> Saved as "${name}".`);
-  };
-  const submit = () => {
-    const c = CHALLENGES.find((x) => x.id === challenge);
-    if (!c) { setOutput((o) => o + "\n> Submitted project for review."); return; }
-    if (c.check.test(draft)) {
-      set((st) => ({ ...st, completedChallenges: Array.from(new Set([...st.completedChallenges, c.id])) }));
-      setOutput(`> Challenge "${c.level}" PASSED ✔  +${c.points} pts`);
-    } else setOutput(`> Not quite. Hint: your code should address "${c.text}"`);
-  };
-  const startChallenge = (id: string) => {
-    const c = CHALLENGES.find((x) => x.id === id); if (!c) return;
-    setChallenge(id);
-    setDraft(lang === "python" ? `# ${c.text}\n` : `// ${c.text}\n`);
-    setOutput("> Challenge loaded. Write code, then SUBMIT.");
-    setTab("code");
-  };
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
 
   const today = todayStr();
   const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
@@ -106,43 +69,8 @@ function Home() {
         </div>
       </div>
 
-      {tab === "code" && (
-        <div className="panel flex flex-col gap-3 p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm text-primary">{challenge ? `challenge_${challenge}` : "main"}{lang === "python" ? ".py" : ".cpp"}</span>
-            <div className="ml-auto flex flex-wrap gap-2">
-              {(["python", "cpp"] as Lang[]).map((l) => (
-                <button key={l} onClick={() => set((st) => ({ ...st, lang: l }))} className={`btn ${s.lang === l ? "btn-primary" : ""}`}>{l === "python" ? "Python" : "C++"}</button>
-              ))}
-              <button className="btn btn-primary" onClick={run} disabled={busy}><Play className="h-3.5 w-3.5" />{busy ? "Running" : "Run Code"}</button>
-              <button className="btn" onClick={save}><Save className="h-3.5 w-3.5" />Save</button>
-              <button className="btn" onClick={() => { setDraft(starter(lang)); setOutput("> Reset."); }}><RotateCcw className="h-3.5 w-3.5" />Reset</button>
-              {challenge && <button className="btn border-accent text-accent" onClick={submit}><Send className="h-3.5 w-3.5" />Submit</button>}
-            </div>
-          </div>
-          <div className="h-[440px]"><CodeEditor value={draft} onChange={setDraft} lang={lang} /></div>
-          <pre className="max-h-48 min-h-28 overflow-auto rounded-md border bg-background p-3 font-mono text-xs text-success">{output}</pre>
-        </div>
-      )}
-
-      {tab === "challenges" && (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {CHALLENGES.map((c) => {
-            const done = s.completedChallenges.includes(c.id);
-            return (
-              <div key={c.id} className={`panel flex flex-col p-4 ${challenge === c.id ? "border-accent" : ""}`}>
-                <div className="flex items-center justify-between"><span className="hud-label text-accent">{c.level}</span>{done ? <Check className="h-4 w-4 text-success" /> : <Trophy className="h-4 w-4 text-muted-foreground" />}</div>
-                <p className="my-3 flex-1">{c.text}</p>
-                <div className="mb-3 grid grid-cols-2 gap-1 font-mono text-[11px] text-muted-foreground">
-                  <span>LANG: {lang === "python" ? "PY" : "C++"}</span><span>PTS: {c.points}</span>
-                  <span>BEST: {done ? c.best ?? 100 : "—"}</span><span className={done ? "text-success" : ""}>{done ? "COMPLETE" : "OPEN"}</span>
-                </div>
-                <button className="btn justify-center" onClick={() => startChallenge(c.id)}>Start</button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {tab === "code" && <CodeWorkspace challenge={challenge} onClearChallenge={() => setChallenge(null)} showProjects={false} />}
+      {tab === "challenges" && <ChallengesPanel activeId={challenge?.id ?? null} onStart={(c) => { setChallenge(c); setTab("code"); }} />}
 
       {tab === "overview" && (
         <>

@@ -1,7 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { ProfileForm } from "@/components/ProfileForm";
 import type { ReactNode } from "react";
-import { LogOut, Bot, Calendar, CheckSquare, Code2, Gauge, LayoutDashboard, NotebookPen, Users, Cpu } from "lucide-react";
+import { LogOut, UserCog, Bot, Calendar, CheckSquare, Code2, Gauge, LayoutDashboard, NotebookPen, Users, Cpu } from "lucide-react";
 
 const NAV = [
   { to: "/dashboard", label: "Command", icon: LayoutDashboard },
@@ -12,11 +14,12 @@ const NAV = [
   { to: "/progress", label: "Progress", icon: Gauge },
   { to: "/robots", label: "Robots", icon: Bot },
   { to: "/team", label: "Team", icon: Users },
+  { to: "/profile", label: "Profile", icon: UserCog },
 ] as const;
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { s, set, loaded } = useStore();
+  const { s, loaded } = useStore();
   const navigate = useNavigate();
   if (path === "/" || path === "/login") return <>{children}</>;
   if (!loaded) return <div className="min-h-screen" />;
@@ -30,7 +33,8 @@ export function Shell({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
-  const logout = () => { set((st) => ({ ...st, user: null })); navigate({ to: "/" }); };
+  if (!s.onboarded) return <main className="mx-auto w-full max-w-5xl p-4 md:p-8"><ProfileForm onboarding /></main>;
+  const logout = async () => { await supabase.auth.signOut(); navigate({ to: "/", replace: true }); };
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r bg-card/60 p-4 md:flex">

@@ -4,6 +4,7 @@ import { Bot, Calendar, CheckSquare, Code2, NotebookPen, PlayCircle, Users, Flam
 import { Bar, PageHeader } from "@/components/Shell";
 import { CodeWorkspace } from "@/components/CodeWorkspace";
 import { ChallengesPanel } from "@/components/ChallengesPanel";
+import { RateSlider } from "@/components/ProfileForm";
 import { catColor, fmtTime, todayStr, useStore, type Challenge } from "@/lib/store";
 
 export const Route = createFileRoute("/dashboard")({
@@ -36,7 +37,7 @@ const ACTIONS = [
 ] as const;
 
 function Home() {
-  const { s } = useStore();
+  const { s, set } = useStore();
   const [tab, setTab] = useState<Tab>("code");
   const [challenge, setChallenge] = useState<Challenge | null>(null);
 
@@ -47,16 +48,15 @@ function Home() {
   const next = [...s.events].filter((e) => e.date >= today).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)).find((e) => e.title.toLowerCase().includes("due")) ?? null;
 
   const stats = [
-    { label: "Robotics Level", value: "Level 4", bar: 64, icon: Bot },
-    { label: "Course Progress", value: "72%", bar: 72, icon: Gauge },
-    { label: "Coding Level", value: "Intermediate", bar: 55, icon: Code2 },
-    { label: "Challenges Completed", value: String(37 + s.completedChallenges.length), bar: 76, icon: Trophy },
-    { label: "Current Streak", value: "12 days", bar: 40, icon: Flame },
+    { key: "robotics", label: "Robotics", icon: Bot },
+    { key: "course", label: "Course Progress", icon: Gauge },
+    { key: "coding", label: "Coding", icon: Code2 },
+    { key: "competition", label: "Competition Ready", icon: Flame },
   ];
 
   return (
     <div>
-      <PageHeader kicker="Your Coding Command Center" title={`WELCOME BACK, ${s.username.toUpperCase()}`} />
+      <PageHeader kicker={s.profile.teamNumber ? `Team ${s.profile.teamNumber} · ${s.profile.role}` : "Your Coding Command Center"} title={`WELCOME BACK, ${s.username.toUpperCase()}`} />
 
       <div className="mb-6 flex justify-center">
         <div className="flex gap-1 rounded-md border bg-card/60 p-1">
@@ -76,12 +76,17 @@ function Home() {
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
             {stats.map((st) => (
-              <div key={st.label} className="panel p-4">
+              <div key={st.key} className="panel p-4">
                 <div className="flex items-center justify-between"><span className="hud-label">{st.label}</span><st.icon className="h-4 w-4 text-primary" /></div>
-                <div className="my-2 font-display text-2xl font-bold">{st.value}</div>
-                <Bar value={st.bar} />
+                <div className="my-2 font-display text-2xl font-bold">{s.ratings[st.key] ?? 0}%</div>
+                <RateSlider value={s.ratings[st.key] ?? 0} onChange={(v) => set((x) => ({ ...x, ratings: { ...x.ratings, [st.key]: v } }))} />
               </div>
             ))}
+            <div className="panel p-4">
+              <div className="flex items-center justify-between"><span className="hud-label">Challenges Done</span><Trophy className="h-4 w-4 text-primary" /></div>
+              <div className="my-2 font-display text-2xl font-bold">{s.completedChallenges.length} / {s.challenges.length}</div>
+              <Bar value={s.challenges.length ? (s.completedChallenges.length / s.challenges.length) * 100 : 0} />
+            </div>
             <div className="panel border-accent/40 p-4">
               <div className="flex items-center justify-between"><span className="hud-label">Next Deadline</span><Clock className="h-4 w-4 text-accent" /></div>
               <div className="mt-2 font-display text-lg font-semibold leading-tight text-accent">{next ? next.title : "Nothing due"}</div>
@@ -125,7 +130,7 @@ function Home() {
                 {s.goals.map((g) => (
                   <div key={g.id}>
                     <div className="mb-1 flex justify-between text-sm"><span>{g.title}</span><span className="font-mono text-xs text-muted-foreground">{g.target === 100 ? `${g.current}%` : `${g.current} / ${g.target}`}</span></div>
-                    <Bar value={(g.current / g.target) * 100} className="bg-accent" />
+                    <RateSlider value={Math.round((g.current / g.target) * 100)} onChange={(v) => set((x) => ({ ...x, goals: x.goals.map((y) => (y.id === g.id ? { ...y, current: Math.round((v / 100) * y.target) } : y)) }))} />
                   </div>
                 ))}
               </div>

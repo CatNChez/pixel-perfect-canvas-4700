@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Check, Circle, Plus, Trash2 } from "lucide-react";
 import { Bar, PageHeader } from "@/components/Shell";
 import { useStore } from "@/lib/store";
+import { RateSlider } from "@/components/ProfileForm";
 
 export const Route = createFileRoute("/progress")({
   head: () => ({
@@ -28,7 +29,8 @@ function ProgressPage() {
   const { s, set, uid } = useStore();
   const [open, setOpen] = useState<string>("Robotics");
   const [goal, setGoal] = useState("");
-  const track = TRACKS.find((t) => t.name === open)!;
+  const tracks = TRACKS.map((t) => ({ ...t, pct: s.trackPct[t.name] ?? t.pct }));
+  const track = tracks.find((t) => t.name === open)!;
   const doneCount = Math.round((track.pct / 100) * track.lessons.length);
 
   return (
@@ -36,11 +38,12 @@ function ProgressPage() {
       <PageHeader kicker="Learning Journey" title="MY PROGRESS" />
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="panel space-y-4 p-5">
-          {TRACKS.map((t) => (
-            <button key={t.name} onClick={() => setOpen(t.name)} className={`block w-full rounded-md p-3 text-left transition ${open === t.name ? "bg-secondary" : "hover:bg-muted"}`}>
-              <div className="mb-1.5 flex justify-between"><span className="hud-label !text-foreground">{t.name}</span><span className="font-mono text-sm text-primary">{t.pct}%</span></div>
-              <Bar value={t.pct} />
-            </button>
+          <p className="text-xs text-muted-foreground">Drag to set how far along you think you are.</p>
+          {tracks.map((t) => (
+            <div key={t.name} onClick={() => setOpen(t.name)} className={`block w-full cursor-pointer rounded-md p-3 text-left transition ${open === t.name ? "bg-secondary" : "hover:bg-muted"}`}>
+              <div className="mb-1.5 hud-label !text-foreground">{t.name}</div>
+              <RateSlider value={t.pct} onChange={(v) => set((st) => ({ ...st, trackPct: { ...st.trackPct, [t.name]: v } }))} />
+            </div>
           ))}
         </div>
         <div className="panel p-5">

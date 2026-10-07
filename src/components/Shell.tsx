@@ -40,7 +40,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex flex-col gap-1">
           {NAV.map((n) => (
-            <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }}
+            <Link key={n.to} to={n.to} activeOptions={{ exact: true }}
               className="flex items-center gap-3 rounded-md px-3 py-2 font-mono text-xs uppercase tracking-widest text-muted-foreground transition hover:bg-secondary hover:text-foreground"
               activeProps={{ className: "bg-secondary !text-primary border-l-2 border-primary" }}>
               <n.icon className="h-4 w-4" />{n.label}
@@ -52,7 +52,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <nav className="flex gap-1 overflow-x-auto border-b bg-card/60 p-2 md:hidden">
           {NAV.map((n) => (
-            <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }} className="btn shrink-0" activeProps={{ className: "!text-primary !border-primary" }}>
+            <Link key={n.to} to={n.to} activeOptions={{ exact: true }} className="btn shrink-0" activeProps={{ className: "!text-primary !border-primary" }}>
               <n.icon className="h-3.5 w-3.5" />{n.label}
             </Link>
           ))}

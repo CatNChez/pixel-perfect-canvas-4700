@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Bot, Calendar, CheckSquare, Code2, Gauge, LayoutDashboard, NotebookPen, Users, Cpu } from "lucide-react";
 
 const NAV = [
-  { to: "/", label: "Command", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Command", icon: LayoutDashboard },
   { to: "/code", label: "Code", icon: Code2 },
   { to: "/notes", label: "Notes", icon: NotebookPen },
   { to: "/calendar", label: "Calendar", icon: Calendar },

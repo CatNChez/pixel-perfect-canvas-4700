@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bot, Calendar, CheckSquare, Code2, NotebookPen, PlayCircle, Users, Flame, Trophy, Gauge, Clock, Play, RotateCcw, Save, Send, Check } from "lucide-react";
+import { Bot, Calendar, CheckSquare, Code2, NotebookPen, PlayCircle, Users, Flame, Trophy, Gauge, Clock} from "lucide-react";
 import { Bar, PageHeader } from "@/components/Shell";
 import { CodeWorkspace } from "@/components/CodeWorkspace";
 import { ChallengesPanel } from "@/components/ChallengesPanel";
 import { catColor, fmtTime, todayStr, useStore, type Challenge } from "@/lib/store";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Command Center — CATty" },

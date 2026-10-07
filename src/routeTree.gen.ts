@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CodeRouteImport } from './routes/code'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RobotsRouteImport } from './routes/robots'
@@ -31,6 +33,16 @@ const CalendarRoute = CalendarRouteImport.update({
 const CodeRoute = CodeRouteImport.update({
   id: '/code',
   path: '/code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotesRoute = NotesRouteImport.update({
@@ -63,6 +75,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
@@ -73,6 +87,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
@@ -84,6 +100,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
@@ -96,6 +114,8 @@ export interface FileRouteTypes {
     | '/'
     | '/calendar'
     | '/code'
+    | '/dashboard'
+    | '/login'
     | '/notes'
     | '/progress'
     | '/robots'
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/'
     | '/calendar'
     | '/code'
+    | '/dashboard'
+    | '/login'
     | '/notes'
     | '/progress'
     | '/robots'
@@ -116,6 +138,8 @@ export interface FileRouteTypes {
     | '/'
     | '/calendar'
     | '/code'
+    | '/dashboard'
+    | '/login'
     | '/notes'
     | '/progress'
     | '/robots'
@@ -127,6 +151,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarRoute: typeof CalendarRoute
   CodeRoute: typeof CodeRoute
+  DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProgressRoute: typeof ProgressRoute
   RobotsRoute: typeof RobotsRoute
@@ -155,6 +181,20 @@ declare module '@tanstack/react-router' {
       path: '/code'
       fullPath: '/code'
       preLoaderRoute: typeof CodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notes': {
@@ -199,6 +239,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarRoute: CalendarRoute,
   CodeRoute: CodeRoute,
+  DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProgressRoute: ProgressRoute,
   RobotsRoute: RobotsRoute,

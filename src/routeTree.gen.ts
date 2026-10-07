@@ -9,20 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CodeRouteImport } from './routes/code'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as TeamRouteImport } from './routes/team'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -31,6 +26,11 @@ const CalendarRoute = CalendarRouteImport.update({
 const CodeRoute = CodeRouteImport.update({
   id: '/code',
   path: '/code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotesRoute = NotesRouteImport.update({
@@ -60,9 +60,9 @@ const TeamRoute = TeamRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
+  '/dashboard': typeof DashboardRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
@@ -70,9 +70,9 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
+  '/dashboard': typeof DashboardRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
@@ -81,9 +81,9 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
+  '/dashboard': typeof DashboardRoute
   '/notes': typeof NotesRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
@@ -93,9 +93,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/calendar'
     | '/code'
+    | '/dashboard'
     | '/notes'
     | '/progress'
     | '/robots'
@@ -103,9 +103,9 @@ export interface FileRouteTypes {
     | '/team'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/calendar'
     | '/code'
+    | '/dashboard'
     | '/notes'
     | '/progress'
     | '/robots'
@@ -113,9 +113,9 @@ export interface FileRouteTypes {
     | '/team'
   id:
     | '__root__'
-    | '/'
     | '/calendar'
     | '/code'
+    | '/dashboard'
     | '/notes'
     | '/progress'
     | '/robots'
@@ -124,9 +124,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   CalendarRoute: typeof CalendarRoute
   CodeRoute: typeof CodeRoute
+  DashboardRoute: typeof DashboardRoute
   NotesRoute: typeof NotesRoute
   ProgressRoute: typeof ProgressRoute
   RobotsRoute: typeof RobotsRoute
@@ -136,13 +136,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
@@ -155,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/code'
       fullPath: '/code'
       preLoaderRoute: typeof CodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notes': {
@@ -196,9 +196,9 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   CalendarRoute: CalendarRoute,
   CodeRoute: CodeRoute,
+  DashboardRoute: DashboardRoute,
   NotesRoute: NotesRoute,
   ProgressRoute: ProgressRoute,
   RobotsRoute: RobotsRoute,

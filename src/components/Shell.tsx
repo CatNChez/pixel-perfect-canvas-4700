@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useStore } from "@/lib/store";
 import type { ReactNode } from "react";
-import { Bot, Calendar, CheckSquare, Code2, Gauge, LayoutDashboard, NotebookPen, Users, Cpu } from "lucide-react";
+import { LogOut, Bot, Calendar, CheckSquare, Code2, Gauge, LayoutDashboard, NotebookPen, Users, Cpu } from "lucide-react";
 
 const NAV = [
   { to: "/dashboard", label: "Command", icon: LayoutDashboard },
@@ -14,6 +15,22 @@ const NAV = [
 ] as const;
 
 export function Shell({ children }: { children: ReactNode }) {
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const { s, set, loaded } = useStore();
+  const navigate = useNavigate();
+  if (path === "/" || path === "/login") return <>{children}</>;
+  if (!loaded) return <div className="min-h-screen" />;
+  if (!s.user) return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="panel max-w-sm space-y-4 p-6 text-center">
+        <Cpu className="mx-auto h-8 w-8 text-primary" />
+        <h1 className="font-display text-2xl font-bold">Please log in</h1>
+        <p className="text-sm text-muted-foreground">You need to log in to use the CATty dashboard.</p>
+        <Link to="/login" className="btn btn-primary justify-center">Log in</Link>
+      </div>
+    </div>
+  );
+  const logout = () => { set((st) => ({ ...st, user: null })); navigate({ to: "/" }); };
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r bg-card/60 p-4 md:flex">
@@ -30,7 +47,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="mt-auto hud-label">SYS ONLINE ● v1.0</div>
+        <div className="mt-auto space-y-2"><div className="hud-label">Signed in: {s.user}</div><button className="btn w-full justify-center" onClick={logout}><LogOut className="h-3.5 w-3.5" />Log out</button></div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <nav className="flex gap-1 overflow-x-auto border-b bg-card/60 p-2 md:hidden">

@@ -15,6 +15,7 @@ import { Route as CodeRouteImport } from './routes/code'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotesRouteImport } from './routes/notes'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -50,6 +51,11 @@ const NotesRoute = NotesRouteImport.update({
   path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
   '/tasks': typeof TasksRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
   '/tasks': typeof TasksRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
   '/tasks': typeof TasksRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/notes'
+    | '/profile'
     | '/progress'
     | '/robots'
     | '/tasks'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/notes'
+    | '/profile'
     | '/progress'
     | '/robots'
     | '/tasks'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/notes'
+    | '/profile'
     | '/progress'
     | '/robots'
     | '/tasks'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
+  ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   RobotsRoute: typeof RobotsRoute
   TasksRoute: typeof TasksRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/progress': {
       id: '/progress'
       path: '/progress'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
+  ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   RobotsRoute: RobotsRoute,
   TasksRoute: TasksRoute,

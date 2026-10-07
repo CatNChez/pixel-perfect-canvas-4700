@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 import { starter, type Lang } from "./langs";
 export type { Lang } from "./langs";
@@ -40,10 +41,24 @@ interface State {
   username: string; lang: Lang; user: string | null; challenges: Challenge[];
   tasks: Task[]; notes: Note[]; events: Event[]; projects: Project[]; goals: Goal[]; robots: Robot[];
   completedChallenges: string[];
+  onboarded: boolean;
+  profile: { teamName: string; teamNumber: string; coach: string; role: string; competition: string; school: string };
+  members: { name: string; role: string }[];
+  teamGoals: { title: string; pct: number }[];
+  schedule: { day: string; time: string }[];
+  ratings: Record<string, number>;
+  trackPct: Record<string, number>;
 }
+export type { State };
 
 const initial: State = {
-  username: "Alan", lang: "python", user: null,
+  username: "Alan", lang: "python", user: null, onboarded: false,
+  profile: { teamName: "", teamNumber: "", coach: "", role: "Programmer", competition: "VEX V5", school: "" },
+  members: [],
+  teamGoals: [{ title: "Qualify for Provincials", pct: 30 }, { title: "Auton win point every match", pct: 20 }],
+  schedule: [{ day: "Mon", time: "4–6 PM" }, { day: "Sat", time: "10 AM–2 PM" }],
+  ratings: { robotics: 50, course: 50, coding: 50, competition: 50 },
+  trackPct: { Robotics: 50, Programming: 50, CAD: 30, Autonomous: 30, Competition: 40 },
   challenges: [
     { id: "b1", level: "BEGINNER", text: "Make the drivetrain move forward.", points: 50, keyword: "forward|speed|drive" },
     { id: "i1", level: "INTERMEDIATE", text: "Make the robot turn exactly 90 degrees.", points: 120, keyword: "90" },
@@ -94,16 +109,40 @@ const initial: State = {
 };
 
 const Ctx = createContext<{ s: State; set: (fn: (s: State) => State) => void; uid: () => string; loaded: boolean } | null>(null);
-const KEY = "catty-dashboard-v1";
-
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [s, setS] = useState<State>(initial);
   const [loaded, setLoaded] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const ready = useRef(false);
+
   useEffect(() => {
-    try { const raw = localStorage.getItem(KEY); if (raw) setS({ ...initial, ...JSON.parse(raw) }); } catch { /* ignore */ }
-    setLoaded(true);
+    const load = async (id: string | null, email: string | null) => {
+      ready.current = false;
+      setUserId(id);
+      if (!id || !email) { setS(initial); setLoaded(true); return; }
+      const { data } = await supabase.from("user_data").select("data").eq("user_id", id).maybeSingle();
+      const saved = (data?.data ?? null) as Partial<State> | null;
+      const display = email.endsWith("@catty.local") ? email.split("@")[0]! : email.split("@")[0]!;
+      setS(saved ? { ...initial, ...saved, user: email } : { ...initial, username: display, user: email });
+      setLoaded(true);
+      setTimeout(() => { ready.current = true; }, 0);
+    };
+    supabase.auth.getSession().then(({ data }) => load(data.session?.user.id ?? null, data.session?.user.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") void load(session?.user.id ?? null, session?.user.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
-  useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify(s)); }, [s, loaded]);
+
+  useEffect(() => {
+    if (!loaded || !userId || !ready.current) return;
+    const t = setTimeout(() => {
+      const { user: _u, ...data } = s;
+      void supabase.from("user_data").upsert({ user_id: userId, data: data as never, updated_at: new Date().toISOString() });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [s, loaded, userId]);
+
   return <Ctx.Provider value={{ s, set: setS, uid, loaded }}>{children}</Ctx.Provider>;
 }
 

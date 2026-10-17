@@ -13,11 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CodeRouteImport } from './routes/code'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RobotsRouteImport } from './routes/robots'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as TeamRouteImport } from './routes/team'
 
@@ -39,6 +41,11 @@ const CodeRoute = CodeRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -66,6 +73,11 @@ const RobotsRoute = RobotsRouteImport.update({
   path: '/robots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -82,11 +94,13 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
   '/dashboard': typeof DashboardRoute
+  '/docs': typeof DocsRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
+  '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
 }
@@ -95,11 +109,13 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
   '/dashboard': typeof DashboardRoute
+  '/docs': typeof DocsRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
+  '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
 }
@@ -109,11 +125,13 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/code': typeof CodeRoute
   '/dashboard': typeof DashboardRoute
+  '/docs': typeof DocsRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/robots': typeof RobotsRoute
+  '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
 }
@@ -124,11 +142,13 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/code'
     | '/dashboard'
+    | '/docs'
     | '/login'
     | '/notes'
     | '/profile'
     | '/progress'
     | '/robots'
+    | '/settings'
     | '/tasks'
     | '/team'
   fileRoutesByTo: FileRoutesByTo
@@ -137,11 +157,13 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/code'
     | '/dashboard'
+    | '/docs'
     | '/login'
     | '/notes'
     | '/profile'
     | '/progress'
     | '/robots'
+    | '/settings'
     | '/tasks'
     | '/team'
   id:
@@ -150,11 +172,13 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/code'
     | '/dashboard'
+    | '/docs'
     | '/login'
     | '/notes'
     | '/profile'
     | '/progress'
     | '/robots'
+    | '/settings'
     | '/tasks'
     | '/team'
   fileRoutesById: FileRoutesById
@@ -164,11 +188,13 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   CodeRoute: typeof CodeRoute
   DashboardRoute: typeof DashboardRoute
+  DocsRoute: typeof DocsRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   RobotsRoute: typeof RobotsRoute
+  SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
   TeamRoute: typeof TeamRoute
 }
@@ -201,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -238,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RobotsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks': {
       id: '/tasks'
       path: '/tasks'
@@ -260,11 +300,13 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   CodeRoute: CodeRoute,
   DashboardRoute: DashboardRoute,
+  DocsRoute: DocsRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   RobotsRoute: RobotsRoute,
+  SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
   TeamRoute: TeamRoute,
 }

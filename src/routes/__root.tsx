@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { StoreProvider } from "../lib/store";
 import { Shell } from "../components/Shell";
+import { PrefsProvider } from "../lib/prefs";
+import { Starfield } from "../components/Brand";
 
 function NotFoundComponent() {
   return (
@@ -53,14 +55,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CATty — Robotics Command Center" },
-      { name: "description", content: "Your personal robotics learning command center." },
+      { title: "CATty — VEX V5 Coding Hub" },
+      { name: "description", content: "Make VEX V5 robot coding easier." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
@@ -84,9 +86,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <Shell><Outlet /></Shell>
-      </StoreProvider>
+      <PrefsProvider>
+        <StoreProvider>
+          <Starfield />
+          <Shell><Outlet /></Shell>
+        </StoreProvider>
+      </PrefsProvider>
     </QueryClientProvider>
   );
 }

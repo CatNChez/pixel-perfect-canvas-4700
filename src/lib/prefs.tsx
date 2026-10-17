@@ -51,8 +51,8 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     const el = document.documentElement;
     const dark = p.theme === "system" ? window.matchMedia("(prefers-color-scheme: dark)").matches : p.theme === "dark";
     el.classList.toggle("light", !dark);
-    el.dataset.motion = p.motion;
-    el.dataset.density = p.density;
+    el.dataset["motion"] = p.motion;
+    el.dataset["density"] = p.density;
     el.style.setProperty("--h", String(p.accent));
     el.style.setProperty("--glass", String(1 - p.glass / 100));
     el.style.setProperty("--editor-size", `${p.editorSize}px`);

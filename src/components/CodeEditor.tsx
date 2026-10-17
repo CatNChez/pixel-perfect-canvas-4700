@@ -47,7 +47,7 @@ export function CodeEditor({ value, onChange, lang }: { value: string; onChange:
 
   const cls = "m-0 whitespace-pre p-3 font-mono text-sm leading-6";
   return (
-    <div className="flex h-full min-h-[360px] overflow-hidden rounded-md border bg-background">
+    <div data-editor className="flex h-full min-h-[360px] overflow-hidden rounded-xl border bg-background/80">
       <div ref={gutter} className="select-none overflow-hidden border-r bg-muted/50 py-3 pr-2 text-right font-mono text-sm leading-6 text-muted-foreground" style={{ minWidth: 44 }}>
         {Array.from({ length: lines }, (_, i) => <div key={i}>{i + 1}</div>)}
       </div>

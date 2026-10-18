@@ -1,0 +1,4 @@
+- [ ] Merge uploaded studio layout while retaining the public front page.
+- [ ] Persist guest/account work, named configurations, cosmetics and music.
+- [ ] Add terminal and honest execution/export for all five languages.
+- [ ] Verify navigation, reloads, saved configurations and real Python/C++ execution.

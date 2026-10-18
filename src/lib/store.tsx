@@ -51,7 +51,7 @@ interface State {
 }
 export type { State };
 
-const initial: State = {
+const makeInitial = (): State => ({
   username: "Alan", lang: "python", user: null, onboarded: false,
   profile: { teamName: "", teamNumber: "", coach: "", role: "Programmer", competition: "VEX V5", school: "" },
   members: [],
@@ -106,26 +106,54 @@ const initial: State = {
     { id: uid(), name: "Whisker", team: "1234C", competition: "VEX V5 — High Stakes", drivetrain: "6-motor tank, 360 RPM", motors: "8× V5 Smart Motor", sensors: "Inertial, Distance, Optical", mechanisms: "Intake, Mobile goal clamp", lang: "python", notes: "Clamp pneumatics leak after ~40 actuations." },
   ],
   completedChallenges: ["b1"],
-};
+});
 
-const Ctx = createContext<{ s: State; set: (fn: (s: State) => State) => void; uid: () => string; loaded: boolean } | null>(null);
+const Ctx = createContext<{ s: State; set: (fn: (s: State) => State) => void; uid: () => string; loaded: boolean; scope: string; enterGuest: () => void; leaveGuest: () => void } | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [s, setS] = useState<State>(initial);
+  const [s, setS] = useState<State>(makeInitial);
   const [loaded, setLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [scope, setScope] = useState("public");
   const ready = useRef(false);
+  const currentId = useRef<string | null>(null);
+  const stateRef = useRef(s);
+  stateRef.current = s;
+
+  const cache = (key: string): Partial<State> | null => {
+    try { return JSON.parse(localStorage.getItem(`catty-workspace:${key}`) ?? "null"); } catch { return null; }
+  };
+  const enterGuest = () => {
+    localStorage.setItem("catty-guest-session", "yes");
+    currentId.current = "guest"; setUserId(null); setScope("guest");
+    setS({ ...makeInitial(), ...cache("guest"), user: "Guest", onboarded: true });
+    ready.current = true; setLoaded(true);
+  };
+  const leaveGuest = () => {
+    localStorage.removeItem("catty-guest-session");
+    currentId.current = null; ready.current = false;
+    setScope("public"); setS(makeInitial());
+  };
 
   useEffect(() => {
     const load = async (id: string | null, email: string | null) => {
+      if (id && currentId.current === id) return;
+      currentId.current = id;
       ready.current = false;
       setUserId(id);
-      if (!id || !email) { setS(initial); setLoaded(true); return; }
-      const { data } = await supabase.from("user_data").select("data").eq("user_id", id).maybeSingle();
-      const saved = (data?.data ?? null) as Partial<State> | null;
-      const display = email.endsWith("@catty.local") ? email.split("@")[0]! : email.split("@")[0]!;
-      setS(saved ? { ...initial, ...saved, user: email } : { ...initial, username: display, user: email });
-      setLoaded(true);
-      setTimeout(() => { ready.current = true; }, 0);
+      if (!id || !email) {
+        if (localStorage.getItem("catty-guest-session")) { enterGuest(); return; }
+        setScope("public"); setS(makeInitial()); setLoaded(true); return;
+      }
+      localStorage.removeItem("catty-guest-session");
+      setLoaded(false); setScope(id);
+      let saved = cache(id);
+      try {
+        const { data, error } = await supabase.from("user_data").select("data").eq("user_id", id).maybeSingle();
+        if (!error && data?.data && !saved) saved = data.data as Partial<State>;
+      } catch { /* Keep the last local copy when offline. */ }
+      if (currentId.current !== id) return;
+      setS({ ...makeInitial(), ...saved, username: saved?.username ?? email.split("@")[0] ?? "Coder", user: email });
+      ready.current = true; setLoaded(true);
     };
     supabase.auth.getSession().then(({ data }) => load(data.session?.user.id ?? null, data.session?.user.email ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
@@ -135,15 +163,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!loaded || !userId || !ready.current) return;
+    if (!loaded || scope === "public" || !ready.current) return;
+    localStorage.setItem(`catty-workspace:${scope}`, JSON.stringify(s));
+    if (!userId) return;
     const t = setTimeout(() => {
       const { user: _u, ...data } = s;
       void supabase.from("user_data").upsert({ user_id: userId, data: data as never, updated_at: new Date().toISOString() });
     }, 800);
     return () => clearTimeout(t);
-  }, [s, loaded, userId]);
+  }, [s, loaded, userId, scope]);
 
-  return <Ctx.Provider value={{ s, set: setS, uid, loaded }}>{children}</Ctx.Provider>;
+  useEffect(() => {
+    const flush = () => {
+      if (!ready.current || scope === "public") return;
+      localStorage.setItem(`catty-workspace:${scope}`, JSON.stringify(stateRef.current));
+    };
+    window.addEventListener("pagehide", flush);
+    return () => { flush(); window.removeEventListener("pagehide", flush); };
+  }, [scope]);
+
+  return <Ctx.Provider value={{ s, set: setS, uid, loaded, scope, enterGuest, leaveGuest }}>{children}</Ctx.Provider>;
 }
 
 /** Save code into a project, keeping the previous version in its history (max 25). */
